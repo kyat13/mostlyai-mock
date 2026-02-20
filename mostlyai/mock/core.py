@@ -283,7 +283,7 @@ async def _sample_table(
         n_workers=n_workers,
         llm_config=llm_config,
         progress_callback=progress_callback,
-        batch_size=0 if batch_size is None else batch_size,
+        batch_size=batch_size,
     )
     table_df = await _convert_table_rows_generator_to_df(
         table_rows_generator=table_rows_generator,
@@ -445,7 +445,6 @@ def _create_table_prompt(
     if n_rows is not None:
         prompt += f"Number of data rows to {verb}: `{n_rows}`.\n\n"
 
-    print(f"prompt : {n_rows}")
 
     if target_primary_key is not None:
         prompt += f"Add prefix to all values of Target Table Primary Key. The prefix is 'B{batch_idx}-'."
@@ -725,7 +724,6 @@ async def _worker(
                 previous_rows=list(previous_rows),
                 llm_output_format=llm_output_format,
             )
-            # print(f"userprompt: { user_prompt }...")  # print the beginning of the user prompt for debugging
             messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
 
             if generated_columns:
@@ -828,7 +826,7 @@ async def _create_table_rows_generator(
     n_workers: int,
     llm_config: LLMConfig,
     progress_callback: Callable[..., Awaitable[None]] | None = None,
-    batch_size = 20, # generate 20 root table rows at a time
+    batch_size: int | None = 20, # generate 20 root table rows at a time
 ) -> AsyncGenerator[dict]:
 
     def supports_structured_outputs(model: str) -> bool:
